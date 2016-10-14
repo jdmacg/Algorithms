@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1476328450 source:c:\users\jordan\documents\github\365\graphcoloring\main.cpp
+	<iostream>
+	<string>
+	<vector>
+	<stdio.h>
+	<sstream>
+	<fstream>
+	<climits>
+	<algorithm>
+

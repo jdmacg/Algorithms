@@ -10,73 +10,69 @@
 using namespace std;
 
 vector <vector <int> > readFile(string fileName, int &count); //file input
-vector <vector <int> > computeColors (int numCities, int source, int destination, vector<vector<int> > flightTimes);
+bool computeColors ( vector<vector<int> > people, vector<int>& output);
 
 int main(){
-    cout << "hello" <<endl;
     int num_vertices;
     vector<vector<int> > graph;
     graph = readFile("Graph1.txt",num_vertices);
-    cout << "hello" <<endl;
-    cout << graph.size()<<endl;
-    for(int i = 1; i <= 50; i ++){
-        cout << i << ": ";
-        for(int j = 0; j < graph[i].size(); j++){
-            cout << graph[i][j] << " ";
+    ofstream output;
+    output.open ("output.txt");
+    output << "Jordan McGregor - 10052770\nVictor Mimo - xxxxxxxx\n";
+
+    vector<int> tables(graph.size(),-1);
+    if(computeColors(graph,tables)){
+        output << "Possible to sit everyone at two tables.\n\nSitting at the Red Table:\n";
+        for(int i = 1; i < tables.size(); i++){
+            if(tables[i]==0){output<<i<<endl;}
         }
-        cout << endl;
+        output<<"\nSitting at the Blue Table:\n";
+        for(int i = 1; i < tables.size(); i++){
+            if(tables[i]==1){output<<i<<endl;}
+        }
     }
-    cout << "Jordan and Victor";
+    else output << "Not possible to seat everyone at two tables"<<endl;
+
     return 0;
 }
 
-
-vector<vector<int> > computeBestPath (int numCities, int source, int destination, vector<vector<int> > flightTimes){
-    //vector of calculated path times. INT_MAX is greatest possible int value. Assume flights do no take longer than this.
-    vector<int> B(numCities+1,INT_MAX); //add one as num cities are not 0 indexed
-    B[source]=0;
-    vector<int> P(numCities+1,-1);//add one as num cities are not 0 indexed
-    vector<int> R;
-    vector<int> C(1,source);
-    bool destInR = false; //is destination in R
-    int index,x,y;
-    while (!C.empty()&&!destInR){
-        index = findSmallest(C,B);
-        x = C[index];
-        cout<<"x is: "<<x<<endl;
-        R.push_back(x);
-        C.erase(C.begin()+index);
-        for(int i = 0; i < flightTimes.size(); i++){
-            if (flightTimes[i][0]==x){//departure city is x
-                cout<<"x:\t"<<flightTimes[i][0]<<endl;
-                y=flightTimes[i][1];//destination city
-                cout<<"y:\t"<<y<<endl;
-                if(find(R.begin(),R.end(),y)==R.end()){//destination city is not in R
-                    cout<<"Y not found in R"<<endl;
-                    if(flightTimes[i][2]>B[x]){//departure time is greater than shortest time it takes to get to x
-                        cout<<"departure time "<<flightTimes[i][2]<<"is greater than bx "<<B[x]<<endl;
-                        if(flightTimes[i][3]<B[y]){//new shortest path is found{
-
-                            if(B[y]==INT_MAX){//haven't seen y before
-                                C.push_back(y);
-                            }
-                            B[y]=flightTimes[i][3];//update best path
-                            P[y]=x;
-                            cout<<"B[y]: "<<y<<"\t"<<B[y]<<endl;
-                        }
-                    }
-                }
+/*
+Function that checks if a graph can be seated at two tables
+Inputs: 2d vector of vertices and its neighbours
+Outputs: Table number/colour for each person and if graph can be seated at two tables
+*/
+bool computeColors(vector<vector<int> > people, vector<int>& output){
+    vector<bool> seen (people.size(),0); //vector to keep track of which verticies have been visited
+    vector<int> nextVertex(1,1); //vector to act as a stack of which verticies to visit next
+    seen[1] = true;
+    output[1] = 0;
+    bool seetingError = false; //keep track if consntraints don't allow a person to sit at either table
+    while(nextVertex.size()!=0&&!seetingError){//loop through all vertecies
+        int current = nextVertex.back(); //set current vertex to back
+        nextVertex.pop_back();
+        for(int i = 0; i < people[current].size(); i++){ //loop through all neighbours
+            if(seen[people[current][i]]==false) // if haven't seen before
+                nextVertex.push_back(people[current][i]);
+                seen[people[current][i]]=true;
+            if(output[current]==0){ // if current vertex is at table 0
+                if(output[people[current][i]]==-1){output[people[current][i]]=1;}
+                else if(output[people[current][i]]==1){}
+                else if(output[people[current][i]]==0){seetingError = true;} //assigning a neighbour to a different table
+                else cout<<"error"<<endl;
+            }
+            else if(output[current]==1){ //if current vertex is at table 1
+                if(output[people[current][i]]==-1){output[people[current][i]]=0;}
+                else if(output[people[current][i]]==0){}
+                else if(output[people[current][i]]==1){seetingError = true;} //assigning a neighbour to a different table
+                else cout<<"error"<<endl;
             }
         }
-        if(x==destination) {destInR = true;}//exit loop
-        cout<<"dest in r\t"<<destInR<<endl;
     }
-    vector<vector<int> > paths;
-    paths.push_back(B);
-    paths.push_back(P);
-    return paths;
+    return (!seetingError)? true: false;
+
 }
-*/
+
+//file input into a 2d vector
 vector<vector<int> > readFile (string fileName, int &count){
 
     ifstream file(fileName);
@@ -84,7 +80,6 @@ vector<vector<int> > readFile (string fileName, int &count){
     getline(file,line);
     istringstream iss(line);
     iss >> count; // number of vertecies
-    cout <<count<< endl;
     vector<vector<int> > arr(count+1);//not 0 indexed
     int vertex; // which vertex is being read.
     while (getline(file, line))
@@ -94,12 +89,10 @@ vector<vector<int> > readFile (string fileName, int &count){
         char colon; //read in colon
         int vertex; // vertex number
         int neighbour; // holds neighbour value while reading in from file
-        //douCoh.seekp(-1,douCoh.cur);
         if (!(iss >> vertex >> colon)) { cout<<"error"; break; } // expect int followed by colon
         while(iss >> neighbour){
             neighbours.push_back(neighbour);
         }
-        cout << vertex <<endl;
         arr[vertex] = neighbours;
     }
     return arr;
