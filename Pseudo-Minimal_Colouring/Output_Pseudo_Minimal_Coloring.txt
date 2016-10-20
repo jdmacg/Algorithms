@@ -1,5 +1,5 @@
 Jordan McGregor - 10052770
-Victor Mimo - xxxxxxxx
+Victor Mimo - 10102028
 
 Graph 3 - Minimal number of tables is: 22
 Graph 4 - Minimal number of tables is: 24
