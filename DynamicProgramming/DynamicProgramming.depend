@@ -1,0 +1,12 @@
+# depslib dependency file v1.0
+1479072063 source:c:\users\jordan\documents\github\365\dynamicprogramming\main.cpp
+	<iostream>
+	<string>
+	<vector>
+	<stdio.h>
+	<sstream>
+	<fstream>
+	<climits>
+	<algorithm>
+	<random>
+
