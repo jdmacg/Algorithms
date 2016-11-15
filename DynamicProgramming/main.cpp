@@ -1,3 +1,9 @@
+/*
+Programming to solve the calculate the maximum value possible from project selection. This program uses dynamic programming to solve the problem
+of weighted project selection.
+Inputs: command line argument of name of text file of projects where each project has a start date, length and value
+Output: programs writes to a text file the projects selected to maximize value, and the maximum value
+*/
 #include <iostream>
 #include <string>
 #include <vector>
@@ -10,121 +16,125 @@
 
 using namespace std;
 
-#define THROW(exceptionClass, message) throw exceptionClass(__FILE__, __LINE__, (message) )
-
 struct project{
     int projectNum;
     int startWeek;
     int length;
+    int endingWeek;
     int value;
 };
 
+vector<project > readFile(const string fileName, int & numWeeks);
+vector<int> projectSelection (const vector<project> projects, const int numWeeks);
+void projectSelectionHelper(const vector<project> & projects,vector<vector<int> > & values);
+vector<int> findProjectsSelected (const vector<vector<int> > values, const vector<project> projects);
+
+//function used to sort projects by ending week
 bool projectComparataor(project p1, project p2)
 {
     return (p1.startWeek + p1.length < p2.startWeek + p2.length);
 }
 
-vector<project > readFile(const string fileName, int & numWeeks);
-vector<int> projectSelection (const vector<project> projects, const int numWeeks);
-void projectSelectionHelper(const vector<project> & projects,vector<vector<int> > & values);
-
-
-int main()
+int main(int argc, char *argv[])
 {
+    string fileName = argv[1];
     int numWeeks;
-    vector<project> projects = readFile("Qooqle_Projects_4.txt",numWeeks);
-
+    vector<project> projects = readFile(fileName,numWeeks);
     sort(projects.begin(),projects.end(),projectComparataor);
-    //for (int i = 0; i < projects.size(); i++){
-        //for(int j = 0; j < projects.at(i).size(); j++){
-            //cout<<i<<" ";
-            //cout<<projects.at(i).projectNum<<" "<<projects.at(i).startWeek<<projects.at(i).length<<projects.at(i).value;
-        //}
-        //cout << endl;
-    //}
-    cout <<numWeeks;
-    projectSelection(projects,numWeeks);
+    vector<int> solution = projectSelection(projects,numWeeks);
+    ofstream output;
+    fileName.insert(fileName.size()-4,"_output");
+    output.open (fileName);
+    output << "Total income earned: " << solution.back()<<"\nProjects selected: ";
+    for(int i = solution.size()-2; i >= 0; i--){
+        output << solution.at(i)<<" ";
+    }
     return 0;
 }
 
+/*
+function that calculates th
+Input: vector of projects, number of weeks to consider
+Output: vector of the projects selected to produce the maximum value, last integer is the maximum value possible from the projects
+*/
 vector<int> projectSelection (const vector<project> projects, const int numWeeks){
     vector<vector<int> > values;
     for(int i = 0; i < projects.size(); i++){
-        vector<int> weeks (numWeeks,-1);
+        vector<int> weeks (numWeeks+1,-1);
         values.push_back(weeks);
     }
-    cout <<" "<<projects.size()-1<<" "<<numWeeks<<endl;
-    cout <<values.size()<<values.at(0).size();
     projectSelectionHelper(projects,values);
-    cout <<endl;
-    //for(int i = 0; i < values.size(); i ++){
-        //for (int j = 0; j < values.at(i).size(); j++){
-            cout << "value: " << values.at(values.size()-1).at(values.at(1).size()-1)<< " ";
-        //}
-       // cout << endl;
+  //  for(int i = 0; i < values.size(); i ++){
+      //  for (int j = 0; j < values.at(i).size(); j++){
+        //    cout << values.at(i).at(j)<<" ";
+       // }
+      // cout << endl;
     //}
-    vector<int> selection;
+
+    vector<int> selection = findProjectsSelected(values,projects);
+    selection.push_back(values.at(values.size()-1).at(numWeeks));
     return selection;
 }
 
+
+/*
+Function to generate 2d vector of maximim value gained by selecting projects. Table is built up by week only considering adding one project at a time.
+Inputs: vector of projects, initialized vector of values
+Output: 2d vector of values. the maximum value possible is held in the entry that considers all projects and all weeks.
+*/
 void projectSelectionHelper(const vector<project> & projects,vector<vector<int> > & values){
-    for(int projectIter = 0; projectIter < values.size(); projectIter++){
+    for(int weekIter = 0; weekIter < values.at(0).size(); weekIter++){
+        int projectEndingWeek = projects.at(0).startWeek+projects.at(0).length-1;
+        if(projectEndingWeek<=weekIter){
+            values.at(0).at(weekIter)=projects.at(0).value;
+        }
+        else
+            values.at(0).at(weekIter)= 0;
+    }
+    for(int projectIter = 1; projectIter < values.size(); projectIter++){
         for(int weekIter = 0; weekIter < values.at(projectIter).size(); weekIter++){
-            int projectEndingWeek = projects.at(projectIter).startWeek+projects.at(projectIter).length-2;
-            if(projectIter == 0){
-                if(projectEndingWeek<=weekIter){
-                    values.at(projectIter).at(weekIter)=projects.at(projectIter).value;
-                }
-                else
-                    values.at(projectIter).at(weekIter)= 0;
+            int projectEndingWeek = projects.at(projectIter).startWeek+projects.at(projectIter).length-1;
+            if(projectEndingWeek==weekIter){
+                int dontSelectProject =  values.at(projectIter-1).at(weekIter);
+                int selectProject =  values.at(projectIter).at(projects.at(projectIter).startWeek-1)+projects.at(projectIter).value;
+                values.at(projectIter).at(weekIter) = max(dontSelectProject,selectProject);
             }
-            else{//project index greater than 0
-                if(projectEndingWeek==weekIter){
-                    int dontSelectProject =  values.at(projectIter-1).at(weekIter);
-                    int selectProject=0;
-                    if(projects.at(projectIter).startWeek-2 < 0){
-                        selectProject+=projects.at(projectIter).value;
-                    }
-                    else
-                        selectProject =  values.at(projectIter).at(projects.at(projectIter).startWeek-2)+projects.at(projectIter).value;
-                    values.at(projectIter).at(weekIter) = max(dontSelectProject,selectProject);
-                }
-                else if(projectEndingWeek<weekIter)
-                    values.at(projectIter).at(weekIter)= values.at(projectIter).at(weekIter-1);
-                else
-                    values.at(projectIter).at(weekIter)= values.at(projectIter-1).at(weekIter);
-            }
+            else if(projectEndingWeek<weekIter)
+                values.at(projectIter).at(weekIter)= values.at(projectIter).at(weekIter-1);
+            else
+                values.at(projectIter).at(weekIter)= values.at(projectIter-1).at(weekIter);
         }
     }
 }
 
 /*
-int projectSelectionHelper(const vector<project> & projects, vector<vector<int> > & currValues, const int projectIndex, const int weekIndex){
-    if(currValues.at(projectIndex).at(weekIndex)==-1){
-        int projectEndingWeek = projects.at(projectIndex).startWeek+projects.at(projectIndex).length-2;
-        if(projectIndex == 0){
-            if(projectEndingWeek<=weekIndex){
-                return projects.at(projectIndex).value;
-            }
-            else
-                return 0;
-        }
-        else{
-            if(projectEndingWeek==weekIndex){
-                int dontSelectProject =  projectSelectionHelper(projects,currValues,projectIndex-1,weekIndex);
-                int selectProject = projectSelectionHelper(projects,currValues,projectIndex,projects.at(projectIndex).startWeek-2)+projects.at(projectIndex).value;
-                return max(dontSelectProject,selectProject);
-            }
-            else if(projectEndingWeek<weekIndex)
-                return projectSelectionHelper(projects,currValues,projectIndex,weekIndex-1);//return max(projectSelectionHelper(projects,currValues,projectIndex,weekIndex-1),projectSelectionHelper(projects,currValues,projectIndex-1,weekIndex));
-            else
-                return projectSelectionHelper(projects,currValues,projectIndex-1,weekIndex);
-        }
-
-    }
-    else return currValues.at(projectIndex).at(weekIndex);
-}
+Function to find which projects were selected to produce maximum value
+Inputs: 2d vector of values from dynamic programming solution of project selection, vector of projects
+Output: vector of projects selected by project number
 */
+vector<int> findProjectsSelected (const vector<vector<int> > values, const vector<project> projects){
+    int lastProject = values.size() - 1;
+    int projectIterator = lastProject;
+    vector<int> selectedProjects;
+    for(int weekIterator = values.at(lastProject).size()-1; weekIterator> 0; weekIterator--){
+        if(values.at(lastProject).at(weekIterator)>values.at(lastProject).at(weekIterator-1)){
+            bool projectFound=false;
+            while(!projectFound){
+                int projectLength = projects.at(projectIterator).length;
+                if (projectLength<=weekIterator){
+                    int valueGainedFromProject = projects.at(projectIterator).value+values.at(lastProject).at(weekIterator-projectLength);
+                    if(valueGainedFromProject==values.at(lastProject).at(weekIterator)){
+                        projectFound = true;
+                        selectedProjects.push_back(projects.at(projectIterator).projectNum);
+                        weekIterator = projects.at(projectIterator).startWeek;
+                    }
+                }
+                projectIterator--;
+            }
+        }
+    }
+    return selectedProjects;
+}
 
 /*
 Function to read in n number of projects. Each project has a start date, length, and value.
