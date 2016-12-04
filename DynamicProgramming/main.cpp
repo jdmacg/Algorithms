@@ -1,5 +1,5 @@
 /*
-Programming to solve the calculate the maximum value possible from project selection. This program uses dynamic programming to solve the problem
+Program to solve the calculate the maximum value possible from project selection. This program uses dynamic programming to solve the problem
 of weighted project selection.
 Inputs: command line argument of name of text file of projects where each project has a start date, length and value
 Output: programs writes to a text file the projects selected to maximize value, and the maximum value
@@ -64,13 +64,6 @@ vector<int> projectSelection (const vector<project> projects, const int numWeeks
         values.push_back(weeks);
     }
     projectSelectionHelper(projects,values);
-  //  for(int i = 0; i < values.size(); i ++){
-      //  for (int j = 0; j < values.at(i).size(); j++){
-        //    cout << values.at(i).at(j)<<" ";
-       // }
-      // cout << endl;
-    //}
-
     vector<int> selection = findProjectsSelected(values,projects);
     selection.push_back(values.at(values.size()-1).at(numWeeks));
     return selection;
